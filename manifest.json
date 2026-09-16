@@ -1,6 +1,6 @@
 {
-  "name": "Workout Check",
-  "short_name": "Workout",
+  "name": "check365",
+  "short_name": "check365",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
