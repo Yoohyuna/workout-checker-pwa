@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0d10" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Workout Check" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+  <title>Workout Check</title>
+  <style>
+    :root {
+      --bg: #0b0d10;
+      --panel: #12151a;
+      --panel-2: #171b21;
+      --line: #262c35;
+      --text: #f5f7fa;
+      --muted: #8e98a8;
+      --accent: #ffffff;
+      --danger: #ff6b6b;
+      --shadow: 0 18px 50px rgba(0,0,0,.28);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "SF Pro Display", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      overscroll-behavior-y: none;
+    }
+
+    button, input { font: inherit; }
+
+    .app {
+      width: min(100%, 760px);
+      margin: 0 auto;
+      padding: max(18px, env(safe-area-inset-top)) 16px calc(100px + env(safe-area-inset-bottom));
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .title-wrap h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: -.7px;
+    }
+
+    .title-wrap p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .icon-btn, .nav-btn, .tab, .view-btn, .emoji-btn, .small-btn {
+      border: 0;
+      color: var(--text);
+      background: var(--panel-2);
+      cursor: pointer;
+    }
+
+    .icon-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      font-size: 20px;
+      border: 1px solid var(--line);
+    }
+
+    .tabs-shell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 2px 0 12px;
+      scrollbar-width: none;
+    }
+
+    .tabs-shell::-webkit-scrollbar { display: none; }
+
+    .tab {
+      flex: 0 0 auto;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      background: var(--panel);
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tab.active {
+      background: #f4f6f8;
+      color: #0b0d10;
+      border-color: #f4f6f8;
+    }
+
+    .tab .emoji { font-size: 17px; }
+
+
+    .color-palette {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 2px 2px 14px;
+      scrollbar-width: none;
+    }
+
+    .color-palette::-webkit-scrollbar { display: none; }
+
+    .color-chip {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      outline: 0;
+      cursor: pointer;
+      flex: 0 0 auto;
+      position: relative;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.1);
+    }
+
+    .color-chip.active::after {
+      content: "";
+      position: absolute;
+      inset: -5px;
+      border-radius: 50%;
+      border: 2px solid #f4f6f8;
+    }
+
+    .day-dot {
+      width: clamp(18px, 4vw, 24px);
+      height: clamp(18px, 4vw, 24px);
+      border-radius: 50%;
+      margin-top: 8px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.08);
+    }
+
+    .mini-dot {
+      width: 70%;
+      height: 70%;
+      border-radius: 50%;
+      display: block;
+    }
+
+    .palette-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      margin: -2px 0 8px 2px;
+    }
+
+    .calendar-card, .year-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .calendar-head {
+      display: grid;
+      grid-template-columns: 44px 1fr 44px;
+      align-items: center;
+      gap: 8px;
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .month-title {
+      text-align: center;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -.3px;
+    }
+
+    .nav-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 13px;
+      border: 1px solid var(--line);
+      font-size: 21px;
+    }
+
+    .weekdays, .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+    }
+
+    .weekdays {
+      padding: 12px 8px 4px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .calendar-grid {
+      gap: 5px;
+      padding: 8px 8px 14px;
+    }
+
+    .day {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      min-height: 46px;
+      border-radius: 14px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .day:hover { background: var(--panel-2); }
+    .day.empty { pointer-events: none; }
+    .day.today { border-color: #5a6472; }
+    .day.checked { background: #1b2027; border-color: #313946; }
+
+    .day-num {
+      position: absolute;
+      top: 7px;
+      left: 8px;
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .day-emoji {
+      font-size: clamp(18px, 4.3vw, 25px);
+      line-height: 1;
+      margin-top: 8px;
+      filter: saturate(.95);
+    }
+
+    .summary {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .summary strong { color: var(--text); }
+
+    .year-card { padding: 14px; }
+
+    .year-head {
+      display: grid;
+      grid-template-columns: 42px 1fr 42px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .year-title { text-align: center; font-size: 20px; font-weight: 800; }
+
+    .year-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 9px;
+    }
+
+    .mini-month {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 9px;
+      cursor: pointer;
+    }
+
+    .mini-month h3 {
+      margin: 0 0 8px;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+    }
+
+    .mini-day {
+      aspect-ratio: 1 / 1;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      color: #657080;
+    }
+
+    .mini-day.checked {
+      color: white;
+      background: #2b323d;
+      font-size: 11px;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      left: 50%;
+      bottom: max(12px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      width: min(calc(100% - 24px), 500px);
+      padding: 7px;
+      background: rgba(18, 21, 26, .9);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      backdrop-filter: blur(20px);
+      box-shadow: var(--shadow);
+      z-index: 20;
+    }
+
+    .view-btn {
+      padding: 12px 14px;
+      border-radius: 14px;
+      color: var(--muted);
+      font-weight: 800;
+      background: transparent;
+    }
+
+    .view-btn.active {
+      color: #0b0d10;
+      background: #f4f6f8;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.62);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 40;
+    }
+
+    .modal-backdrop.open { display: flex; }
+
+    .sheet {
+      width: min(100%, 760px);
+      background: #111419;
+      border: 1px solid var(--line);
+      border-radius: 26px 26px 0 0;
+      padding: 18px 16px calc(22px + env(safe-area-inset-bottom));
+      max-height: 85vh;
+      overflow: auto;
+    }
+
+    .sheet-handle {
+      width: 46px;
+      height: 5px;
+      background: #343b45;
+      border-radius: 999px;
+      margin: 0 auto 18px;
+    }
+
+    .sheet h2 { margin: 0 0 16px; font-size: 20px; }
+
+    .setting-row {
+      display: grid;
+      grid-template-columns: 56px 1fr auto;
+      align-items: center;
+      gap: 10px;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 10px;
+      margin-bottom: 8px;
+    }
+
+    .emoji-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      font-size: 25px;
+      background: #0f1216;
+      border: 1px solid var(--line);
+    }
+
+    .name-input {
+      width: 100%;
+      background: transparent;
+      color: var(--text);
+      border: 0;
+      outline: none;
+      font-weight: 700;
+      min-width: 0;
+    }
+
+    .small-btn {
+      padding: 9px 11px;
+      border-radius: 11px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+    }
+
+    .add-goal {
+      width: 100%;
+      margin-top: 8px;
+      padding: 13px;
+      border-radius: 14px;
+      border: 1px dashed #3d4652;
+      background: transparent;
+      color: var(--text);
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .emoji-picker {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      margin: 12px 0 16px;
+    }
+
+    .emoji-choice {
+      aspect-ratio: 1/1;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      border-radius: 12px;
+      font-size: 23px;
+      cursor: pointer;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .action-btn {
+      flex: 1;
+      padding: 13px;
+      border: 0;
+      border-radius: 14px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .action-btn.secondary {
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    .action-btn.primary {
+      background: #f4f6f8;
+      color: #0b0d10;
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 520px) {
+      .app { padding-left: 12px; padding-right: 12px; }
+      .year-grid { gap: 6px; }
+      .mini-month { padding: 6px; border-radius: 13px; }
+      .mini-month h3 { font-size: 11px; margin-bottom: 5px; }
+      .mini-day { font-size: 7px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="title-wrap">
+        <h1>Workout Check</h1>
+        
+      </div>
+      <button class="icon-btn" id="settingsBtn" aria-label="설정">⚙︎</button>
+    </header>
+
+    <section class="tabs-shell" id="goalTabs"></section>
+    <div class="palette-label">체크 색상</div>
+    <section class="color-palette" id="colorPalette"></section>
+
+    <section id="monthView">
+      <div class="calendar-card">
+        <div class="calendar-head">
+          <button class="nav-btn" id="prevMonth" aria-label="이전 달">‹</button>
+          <div class="month-title" id="monthTitle"></div>
+          <button class="nav-btn" id="nextMonth" aria-label="다음 달">›</button>
+        </div>
+
+        <div class="weekdays">
+          <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
+        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+      </div>
+
+      <div class="summary">
+        <span>이번 달 <strong id="monthCount">0회</strong></span>
+        <span>체크한 날을 다시 누르면 해제</span>
+      </div>
+    </section>
+
+    <section id="yearView" class="hidden">
+      <div class="year-card">
+        <div class="year-head">
+          <button class="nav-btn" id="prevYear">‹</button>
+          <div class="year-title" id="yearTitle"></div>
+          <button class="nav-btn" id="nextYear">›</button>
+        </div>
+        <div class="year-grid" id="yearGrid"></div>
+      </div>
+      <div class="summary">
+        <span>올해 <strong id="yearCount">0회</strong></span>
+        <span>월을 누르면 월간 보기로 이동</span>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <button class="view-btn active" data-view="month">월별</button>
+    <button class="view-btn" data-view="year">1년</button>
+  </nav>
+
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <h2>목적 설정</h2>
+      <div id="goalSettings"></div>
+      <button class="add-goal" id="addGoalBtn">+ 새 목적 추가</button>
+      <div class="modal-actions">
+        <button class="action-btn secondary" id="cancelSettings">닫기</button>
+        <button class="action-btn primary" id="saveSettings">저장</button>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "workout-checker-v1";
+    const EMOJIS = ["✅","🏋️","💪","🏃","🔥","⭐","🌙","🧘","🚴","🏊","🥊","⚡","❤️","🖤","💜","🩵","🍀","🎯","👟","🧠","🥗","💧","😴","📚","🧹","💸","🚫","🫶"];
+
+    const DEFAULT_COLORS = ["#7C9CFF","#58D68D","#FFD166","#FF7A8A","#B88CFF","#56CFE1"];
+
+    const defaultState = {
+      goals: [
+        { id: crypto.randomUUID(), name: "운동", colors: ["#97BEF9","#FEB0C5"] },
+        { id: crypto.randomUUID(), name: "릴스", colors: ["#AFEAA1"] }
+      ],
+      activeGoalId: null,
+      activeColorByGoal: {},
+      checks: {},
+      view: "month"
+    };
+    defaultState.activeGoalId = defaultState.goals[0].id;
+
+    let state = loadState();
+    const now = new Date();
+    let currentYear = now.getFullYear();
+    let currentMonth = now.getMonth();
+    let settingsDraft = null;
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return structuredClone(defaultState);
+        const saved = JSON.parse(raw);
+        if (!saved.goals?.length) return structuredClone(defaultState);
+        const migratedGoals = (saved.goals || []).map(g => {
+          const normalized = {
+            ...g,
+            colors: Array.isArray(g.colors) && g.colors.length ? g.colors : [...DEFAULT_COLORS]
+          };
+          if (normalized.name === "운동") normalized.colors = ["#97BEF9","#FEB0C5"];
+          if (normalized.name === "릴스" || normalized.name === "유산소") {
+            normalized.name = "릴스";
+            normalized.colors = ["#AFEAA1"];
+          }
+          return normalized;
+        });
+
+        const migratedChecks = {};
+        for (const [goalId, goalChecks] of Object.entries(saved.checks || {})) {
+          migratedChecks[goalId] = {};
+          for (const [key, value] of Object.entries(goalChecks || {})) {
+            migratedChecks[goalId][key] =
+              typeof value === "string" ? value : (value ? DEFAULT_COLORS[0] : null);
+          }
+        }
+
+        return {
+          ...structuredClone(defaultState),
+          ...saved,
+          goals: migratedGoals.length ? migratedGoals : structuredClone(defaultState.goals),
+          activeGoalId: saved.activeGoalId || migratedGoals[0]?.id || defaultState.goals[0].id,
+          activeColorByGoal: saved.activeColorByGoal || {},
+          checks: migratedChecks
+        };
+      } catch {
+        return structuredClone(defaultState);
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    const $ = (id) => document.getElementById(id);
+
+    function activeGoal() {
+      return state.goals.find(g => g.id === state.activeGoalId) || state.goals[0];
+    }
+
+    function dateKey(year, month, day) {
+      const m = String(month + 1).padStart(2, "0");
+      const d = String(day).padStart(2, "0");
+      return `${year}-${m}-${d}`;
+    }
+
+    function checkedColor(goalId, key) {
+      return state.checks?.[goalId]?.[key] || null;
+    }
+
+    function activeColor() {
+      const goal = activeGoal();
+      const saved = state.activeColorByGoal?.[goal.id];
+      return goal.colors.includes(saved) ? saved : goal.colors[0];
+    }
+
+    function toggleCheck(key) {
+      const goalId = state.activeGoalId;
+      const selected = activeColor();
+      if (!state.checks[goalId]) state.checks[goalId] = {};
+      const current = state.checks[goalId][key];
+
+      if (current === selected) delete state.checks[goalId][key];
+      else state.checks[goalId][key] = selected;
+
+      saveState();
+      render();
+      if (navigator.vibrate) navigator.vibrate(18);
+    }
+
+    function renderTabs() {
+      const root = $("goalTabs");
+      root.innerHTML = "";
+      state.goals.forEach(goal => {
+        const btn = document.createElement("button");
+        btn.className = "tab" + (goal.id === state.activeGoalId ? " active" : "");
+        btn.innerHTML = `<span>${escapeHtml(goal.name)}</span>`;
+        btn.onclick = () => {
+          state.activeGoalId = goal.id;
+          saveState();
+          render();
+        };
+        root.appendChild(btn);
+      });
+    }
+
+
+    function renderPalette() {
+      const root = $("colorPalette");
+      root.innerHTML = "";
+      const goal = activeGoal();
+
+      if (!state.activeColorByGoal) state.activeColorByGoal = {};
+      if (!goal.colors.includes(state.activeColorByGoal[goal.id])) {
+        state.activeColorByGoal[goal.id] = goal.colors[0];
+      }
+
+      goal.colors.forEach(color => {
+        const btn = document.createElement("button");
+        btn.className = "color-chip" + (activeColor() === color ? " active" : "");
+        btn.style.background = color;
+        btn.setAttribute("aria-label", `체크 색상 ${color}`);
+        btn.onclick = () => {
+          state.activeColorByGoal[goal.id] = color;
+          saveState();
+          renderPalette();
+        };
+        root.appendChild(btn);
+      });
+    }
+
+    function renderMonth() {
+      const goal = activeGoal();
+      $("monthTitle").textContent = `${currentYear}년 ${currentMonth + 1}월`;
+      $("calendarGrid").innerHTML = "";
+
+      const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+      for (let i = 0; i < firstDay; i++) {
+        const empty = document.createElement("div");
+        empty.className = "day empty";
+        $("calendarGrid").appendChild(empty);
+      }
+
+      let count = 0;
+      for (let day = 1; day <= daysInMonth; day++) {
+        const key = dateKey(currentYear, currentMonth, day);
+        const color = checkedColor(goal.id, key);
+        const checked = !!color;
+        if (checked) count++;
+
+        const cell = document.createElement("button");
+        const isToday =
+          currentYear === now.getFullYear() &&
+          currentMonth === now.getMonth() &&
+          day === now.getDate();
+
+        cell.className = "day" + (checked ? " checked" : "") + (isToday ? " today" : "");
+        cell.innerHTML = `
+          <span class="day-num">${day}</span>
+          ${checked ? `<span class="day-dot" style="background:${color}"></span>` : ""}
+        `;
+        cell.onclick = () => toggleCheck(key);
+        $("calendarGrid").appendChild(cell);
+      }
+
+      $("monthCount").textContent = `${count}회`;
+    }
+
+    function renderYear() {
+      $("yearTitle").textContent = `${currentYear}년`;
+      $("yearGrid").innerHTML = "";
+      const goal = activeGoal();
+      let total = 0;
+
+      for (let month = 0; month < 12; month++) {
+        const card = document.createElement("div");
+        card.className = "mini-month";
+        const firstDay = new Date(currentYear, month, 1).getDay();
+        const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
+
+        const title = document.createElement("h3");
+        title.textContent = `${month + 1}월`;
+        card.appendChild(title);
+
+        const grid = document.createElement("div");
+        grid.className = "mini-grid";
+
+        for (let i = 0; i < firstDay; i++) {
+          const empty = document.createElement("div");
+          empty.className = "mini-day";
+          grid.appendChild(empty);
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+          const key = dateKey(currentYear, month, day);
+          const color = checkedColor(goal.id, key);
+          const checked = !!color;
+          if (checked) total++;
+
+          const cell = document.createElement("div");
+          cell.className = "mini-day" + (checked ? " checked" : "");
+          if (checked) {
+            cell.innerHTML = `<span class="mini-dot" style="background:${color}"></span>`;
+          } else {
+            cell.textContent = day;
+          }
+          grid.appendChild(cell);
+        }
+
+        card.appendChild(grid);
+        card.onclick = () => {
+          currentMonth = month;
+          setView("month");
+        };
+        $("yearGrid").appendChild(card);
+      }
+
+      $("yearCount").textContent = `${total}회`;
+    }
+
+    function setView(view) {
+      state.view = view;
+      saveState();
+      $("monthView").classList.toggle("hidden", view !== "month");
+      $("yearView").classList.toggle("hidden", view !== "year");
+      document.querySelectorAll(".view-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.view === view);
+      });
+      render();
+    }
+
+    function renderSettings() {
+      const root = $("goalSettings");
+      root.innerHTML = "";
+
+      settingsDraft.forEach(goal => {
+        const row = document.createElement("div");
+        row.className = "setting-row";
+        row.innerHTML = `
+          <div style="display:flex;gap:4px;flex-wrap:wrap;width:48px;justify-content:center">
+            ${(goal.colors || DEFAULT_COLORS).slice(0,4).map(c => `<span style="width:14px;height:14px;border-radius:50%;background:${c};display:block"></span>`).join("")}
+          </div>
+          <input class="name-input" data-name-id="${goal.id}" value="${escapeAttr(goal.name)}" maxlength="16" />
+          <button class="small-btn" data-delete-id="${goal.id}">삭제</button>
+        `;
+        root.appendChild(row);
+      });
+
+      root.querySelectorAll("[data-name-id]").forEach(input => {
+        input.oninput = () => {
+          const goal = settingsDraft.find(g => g.id === input.dataset.nameId);
+          if (goal) goal.name = input.value;
+        };
+      });
+
+      root.querySelectorAll("[data-delete-id]").forEach(btn => {
+        btn.onclick = () => {
+          if (settingsDraft.length <= 1) {
+            alert("목적은 최소 1개가 필요해요.");
+            return;
+          }
+          settingsDraft = settingsDraft.filter(g => g.id !== btn.dataset.deleteId);
+          renderSettings();
+        };
+      });
+    }
+
+    function openSettings() {
+      settingsDraft = structuredClone(state.goals);
+      renderSettings();
+      $("settingsModal").classList.add("open");
+    }
+
+    function closeSettings() {
+      $("settingsModal").classList.remove("open");
+    }
+
+    function render() {
+      renderTabs();
+      renderPalette();
+      if (state.view === "month") renderMonth();
+      else renderYear();
+    }
+
+    function escapeHtml(str = "") {
+      return str.replace(/[&<>"']/g, c => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+      }[c]));
+    }
+
+    function escapeAttr(str = "") {
+      return escapeHtml(str);
+    }
+
+    $("prevMonth").onclick = () => {
+      currentMonth--;
+      if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+      render();
+    };
+
+    $("nextMonth").onclick = () => {
+      currentMonth++;
+      if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+      render();
+    };
+
+    $("prevYear").onclick = () => { currentYear--; render(); };
+    $("nextYear").onclick = () => { currentYear++; render(); };
+
+    document.querySelectorAll(".view-btn").forEach(btn => {
+      btn.onclick = () => setView(btn.dataset.view);
+    });
+
+    $("settingsBtn").onclick = openSettings;
+    $("cancelSettings").onclick = closeSettings;
+
+    $("saveSettings").onclick = () => {
+      const cleaned = settingsDraft
+        .map(g => ({
+          ...g,
+          name: g.name.trim() || "목적",
+          colors: Array.isArray(g.colors) && g.colors.length ? g.colors : [...DEFAULT_COLORS]
+        }))
+        .slice(0, 8);
+
+      if (!cleaned.length) return;
+
+      const oldIds = new Set(state.goals.map(g => g.id));
+      const newIds = new Set(cleaned.map(g => g.id));
+      for (const id of oldIds) {
+        if (!newIds.has(id)) delete state.checks[id];
+      }
+
+      state.goals = cleaned;
+      if (!newIds.has(state.activeGoalId)) state.activeGoalId = cleaned[0].id;
+      saveState();
+      closeSettings();
+      render();
+    };
+
+    $("addGoalBtn").onclick = () => {
+      if (settingsDraft.length >= 8) {
+        alert("목적은 최대 8개까지 만들 수 있어요.");
+        return;
+      }
+      settingsDraft.push({
+        id: crypto.randomUUID(),
+        name: `목적 ${settingsDraft.length + 1}`,
+        colors: [...DEFAULT_COLORS]
+      });
+      renderSettings();
+    };
+
+    $("settingsModal").onclick = (e) => {
+      if (e.target === $("settingsModal")) closeSettings();
+    };
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    }
+
+    setView(state.view || "month");
+  </script>
+</body>
+</html>
