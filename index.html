@@ -59,7 +59,8 @@
       letter-spacing: -.7px;
     }
 
-    .title-wrap p {
+    .title-wrap p,
+    .today-date {
       margin: 5px 0 0;
       color: var(--muted);
       font-size: 13px;
@@ -509,7 +510,7 @@
     <header class="topbar">
       <div class="title-wrap">
         <h1>check365</h1>
-        
+        <div class="today-date" id="todayDate"></div>
       </div>
       <button class="icon-btn" id="settingsBtn" aria-label="설정">⚙︎</button>
     </header>
@@ -654,6 +655,13 @@
     }
 
     const $ = (id) => document.getElementById(id);
+
+    const WEEKDAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
+
+    function renderTodayDate() {
+      $("todayDate").textContent =
+        `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일 (${WEEKDAY_NAMES[now.getDay()]})`;
+    }
 
     function activeGoal() {
       return state.goals.find(g => g.id === state.activeGoalId) || state.goals[0];
@@ -1012,6 +1020,7 @@
       navigator.serviceWorker.register("./sw.js").catch(() => {});
     }
 
+    renderTodayDate();
     setView(state.view || "month");
   </script>
 </body>
