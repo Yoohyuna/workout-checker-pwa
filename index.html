@@ -1020,7 +1020,17 @@
     };
 
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("./sw.js").catch(() => {});
+      navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" })
+        .then(reg => {
+          reg.update().catch(() => {});
+          let reloaded = false;
+          navigator.serviceWorker.addEventListener("controllerchange", () => {
+            if (reloaded) return;
+            reloaded = true;
+            location.reload();
+          });
+        })
+        .catch(() => {});
     }
 
     renderTodayDate();
