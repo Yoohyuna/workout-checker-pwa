@@ -1,5 +1,5 @@
 
-const CACHE = "workout-check-v7";
+const CACHE = "workout-check-v8";
 const ASSETS = [
   "./",
   "./index.html",
